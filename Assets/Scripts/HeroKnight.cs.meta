@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 54585f91071ddc143b759e9ad3f94249
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 165188
+  packageName: Hero Knight - Pixel Art
+  packageVersion: 1.2
+  assetPath: Assets/Hero Knight - Pixel Art/Demo/HeroKnight.cs
+  uploadId: 447637
