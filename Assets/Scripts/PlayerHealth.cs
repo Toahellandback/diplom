@@ -1,32 +1,85 @@
+using System.Diagnostics;
 using UnityEngine;
 
-public class PlayerHealth : MonoBehaviour
+public class PlayerSave : MonoBehaviour
 {
-    [Header("Health")]
-    [SerializeField] private int maxHealth = 3;
-
-    private int currentHealth;
+    private CoinManager coins;
 
     private void Start()
     {
-        currentHealth = maxHealth;
-    }
+        health = GetComponent<PlayerHealth>();
+        coins = FindObjectOfType<CoinManager>();
 
-    public void TakeDamage(int damage)
-    {
-        currentHealth -= damage;
-
-        Debug.Log("Player HP: " + currentHealth);
-
-        if (currentHealth <= 0)
+        // Проверяем: если игрок нажал "Продолжить" в главном меню — загружаем всё
+        if (MainMenuManager.IsLoadingSave)
         {
-            Die();
+            LoadGame();
+        }
+        else
+        {
+            Debug.Log("Запущена Новая Игра: спавн игрока на EntryPoint контролирует RoomManager.");
         }
     }
 
-    private void Die()
+    // =========================
+    // SAVE (Вызывается на твоих Сейвпоинтах на уровне)
+    // =========================
+    public void SaveGame()
     {
-        Debug.Log("Player died!");
-        // gameObject.SetActive(false); // раскомментируй когда нужно
+        if (SaveSystem.Instance == null || RoomManager.Instance == null)
+            return;
+
+        SaveSystem.Instance.SaveGame(
+            transform.position,
+            health.CurrentHP(),
+            coins.GetCoins(),
+            RoomManager.Instance.GetRoomIndex()
+        );
+    }
+
+    // =========================
+    // LOAD
+    // =========================
+    public void LoadGame()
+    {
+        if (SaveSystem.Instance == null)
+            return;
+
+        if (!SaveSystem.Instance.HasSave())
+            return;
+
+        // 1. Загружаем HP и монеты
+        int hp = SaveSystem.Instance.LoadHP();
+        health.SetHealth(hp);
+
+        int savedCoins = SaveSystem.Instance.LoadCoins();
+        coins.SetCoins(savedCoins);
+
+        // 2. Загружаем индекс комнаты, где был игрок
+        int room = SaveSystem.Instance.LoadRoom();
+        if (RoomManager.Instance != null)
+        {
+            // Передаем индекс в RoomManager и заставляем его сгенерировать эту комнату
+            RoomManager.Instance.StartLoadedRoom(room);
+        }
+
+        // 3. Переносим игрока ТОЧНО на координаты сохраненного Сейвпоинта
+        Vector3 savedPos = SaveSystem.Instance.LoadPosition();
+
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.position = new Vector2(savedPos.x, savedPos.y);
+        }
+        transform.position = new Vector3(savedPos.x, savedPos.y, 0f);
+
+        Debug.Log("Игра загружена. Игрок восстановлен на Сейвпоинте: " + savedPos);
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveGame();
     }
 }
